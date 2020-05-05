@@ -7,6 +7,9 @@ from PIL import Image
 import numpy as np
 import time
 import logging
+import tempfile
+import random
+import string
 
 import basnet
 
@@ -21,7 +24,6 @@ CORS(app)
 @app.route('/', methods=['GET'])
 def hello():
     return 'Hello BASNet!'
-
 
 # Route http posts to this method
 @app.route('/', methods=['POST'])
@@ -38,16 +40,26 @@ def run():
     # Convert string data to PIL Image
     img = Image.open(io.BytesIO(data))
 
-    # Ensure i,qge size is under 1024
-    if img.size[0] > 1024 or img.size[1] > 1024:
-        img.thumbnail((1024, 1024))
+    # Resize image to 256 (BASNet compliant), and crop it
+    img.thumbnail((256, 256))
+    box = (0, 0, 256, 256)
+    cropped_image = img.crop(box)
 
     # Process Image
-    res = basnet.run(np.array(img))
+    res = basnet.run(np.array(cropped_image))
+
+    # Create mask file, load it in memory and remove file
+    maskfilename = randomString(8) + ".png"
+    res.save(maskfilename)
+    mask = Image.open(maskfilename).convert("L")
+    os.remove(maskfilename)
+
+    empty = Image.new("RGBA", cropped_image.size, 0)
+    newImg = Image.composite(cropped_image, empty, mask)
 
     # Save to buffer
     buff = io.BytesIO()
-    res.save(buff, 'PNG')
+    newImg.save(buff, 'PNG')
     buff.seek(0)
 
     # Print stats
@@ -56,6 +68,9 @@ def run():
     # Return data
     return send_file(buff, mimetype='image/png')
 
+def randomString(stringLength=8):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
 
 if __name__ == '__main__':
     os.environ['FLASK_ENV'] = 'development'
