@@ -57,6 +57,9 @@ curl https://download.pytorch.org/models/resnet34-333f7ec4.pth -o resnet34-333f7
 
 (https://github.com/NVIDIA/nvidia-docker)
 
+
+#### Execute with:
+
 ```
 docker build -t basnet . && docker run --gpus all --rm -p 8088:80 basnet
 ```
