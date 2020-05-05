@@ -53,7 +53,10 @@ Download Resnet checkpoint
 curl https://download.pytorch.org/models/resnet34-333f7ec4.pth -o resnet34-333f7ec4.pth
 ```
 
+#### Add nvidia docker
+
+(https://github.com/NVIDIA/nvidia-docker)
+
 ```
-docker build -t basnet .
-docker run --rm -p 8080:8080 basnet
+docker build -t basnet . && docker run --gpus all --rm -p 8088:80 basnet
 ```
